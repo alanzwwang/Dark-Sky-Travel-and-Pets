@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate 3D Obby & Pet Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #111;
+            color: white;
+            user-select: none;
+        }
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 20, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0,255,204,0.5);
+        }
+        .btn {
+            background: linear-gradient(45deg, #ff007f, #7f00ff);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255,0,127,0.4);
+            transition: 0.2s;
+            margin: 10px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255,0,127,0.7);
+        }
+        input {
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: 2px solid #444;
+            background: #222;
+            color: white;
+            margin: 10px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #00ffcc;
+        }
+        /* HUD */
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .hud-panel {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        #controls-hint {
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        /* Modals / Shops */
+        .modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a2e;
+            border: 2px solid #333;
+            border-radius: 20px;
+            padding: 30px;
+            width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 20;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .close-btn {
+            background: #ff4444;
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .card {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #0f3460;
+            text-align: center;
+            position: relative;
+        }
+        .card button {
+            background: #00ffcc;
+            color: #111;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .card button:hover {
+            background: #00b38f;
+        }
+        /* Egg Styles & Tooltips */
+        .egg-card {
+            position: relative;
+            cursor: pointer;
+        }
+        .tooltip {
+            visibility: hidden;
+            width: 220px;
+            background-color: #000;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 30;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            border: 1px solid #444;
+            pointer-events: none;
+        }
+        .egg-card:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* Menu Buttons Row */
+        .menu-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        .menu-btn {
+            background: #0f3460;
+            border: 1px solid #00ffcc;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .menu-btn:hover {
+            background: #00ffcc;
+            color: #111;
+        }
+    </style>
+    <!-- Three.js for 3D Graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <!-- HOME SCREEN / AUTH -->
+    <div id="login-screen" class="screen">
+        <h1>OBBY LEGENDS 3D</h1>
+        <p>Save your progress, hatch rare pets, and conquer impossible courses!</p>
+
+        <div id="auth-choice" style="display:flex; flex-direction:column; align-items:center; margin-top:20px;">
+            <button class="btn" onclick="showAuthForm('create')">Create New Account</button>
+            <button class="btn" style="background: linear-gradient(45deg, #00adb5, #393e46);" onclick="showAuthForm('login')">Login to Existing Account</button>
+        </div>
+
+        <div id="auth-form" class="hidden" style="display:flex; flex-direction:column; align-items:center; margin-top:20px;">
+            <h3 id="auth-title">Create Account</h3>
+            <input type="text" id="username-input" placeholder="Enter Username" autocomplete="off">
+            <input type="password" id="password-input" placeholder="Enter Password">
+            <button class="btn" id="auth-submit-btn" onclick="submitAuth()">Submit</button>
+            <button class="menu-btn" style="margin-top: 15px;" onclick="backToAuthChoice()">Back</button>
+        </div>
+    </div>
+
+    <!-- INSTRUCTIONS MODAL -->
+    <div id="instructions-modal" class="modal hidden" style="z-index: 50;">
+        <div class="modal-header">
+            <h2>📖 How to Play</h2>
+        </div>
+        <p><b>Movement:</b> Use <b>WASD</b> or <b>Arrow Keys</b> to walk around.</p>
+        <p><b>Jumping:</b> Press <b>SPACEBAR</b> to jump across platforms.</p>
+        <p><b>Obstacles:</b> Avoid red spikes and moving blocks! Touching them restarts you.</p>
+        <p><b>Goal:</b> Reach the glowing pink platform at the end of the course to win coins!</p>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" onclick="closeInstructionsAndPlay()">Got it, Let's Play!</button>
+        </div>
+    </div>
+
+    <!-- LEVEL SELECT SCREEN -->
+    <div id="menu-screen" class="screen hidden">
+        <h1>SELECT DIFFICULTY</h1>
+        <div style="display: flex; gap: 20px; margin-top: 20px;">
+            <button class="btn" style="background: #2ecc71;" onclick="prepObby('easy')">Easy (+10 Coins)</button>
+            <button class="btn" style="background: #f1c40f;" onclick="prepObby('intermediate')">Intermediate (+15 Coins)</button>
+            <button class="btn" style="background: #e67e22;" onclick="prepObby('hard')">Hard (+20 Coins)</button>
+            <button class="btn" style="background: #e74c3c;" onclick="prepObby('impossible')">Impossible (+50 Coins)</button>
+        </div>
+        <div class="menu-buttons" style="margin-top: 30px;">
+            <button class="menu-btn" onclick="openModal('shop-modal')">🛍️ Upgrades Shop</button>
+            <button class="menu-btn" onclick="openModal('pet-modal')">🥚 Pet Store</button>
+            <button class="menu-btn" onclick="openModal('trade-modal')">🤝 Trading Plaza</button>
+        </div>
+    </div>
+
+    <!-- GAME UI HUD -->
+    <div id="ui-container" class="hidden">
+        <div id="hud">
+            <div class="hud-panel">Coins: <span id="coin-display">0.00</span></div>
+            <div class="hud-panel" id="difficulty-display">Difficulty: Easy</div>
+            <div class="hud-panel">Equipped Pet: <span id="pet-display">None</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div id="controls-hint">WASD / Arrow Keys to Move | SPACE to Jump</div>
+            <button class="menu-btn interactive" onclick="returnToMenu()">Quit to Menu</button>
+        </div>
+    </div>
+
+    <!-- UPGRADES SHOP MODAL -->
+    <div id="shop-modal" class="modal hidden">
+        <div class="modal-header">
+            <h2>Upgrades Shop</h2>
+            <button class="close-btn" onclick="closeModal('shop-modal')">X</button>
+        </div>
+        <div class="grid-container">
+            <div class="card">
+                <h3>More Speed</h3>
+                <p>Boost running velocity!</p>
+                <p>Cost: <span id="cost-speed">50</span> Coins</p>
+                <button onclick="buyUpgrade('speed')">Buy Upgrade</button>
+            </div>
+            <div class="card">
+                <h3>Higher Jump</h3>
+                <p>Leap higher over obstacles!</p>
+                <p>Cost: <span id="cost-jump">50</span> Coins</p>
+                <button onclick="buyUpgrade('jump')">Buy Upgrade</button>
+            </div>
+            <div class="card">
+                <h3>Jetpack</h3>
+                <p>Hold 'E' to fly briefly!</p>
+                <p>Cost: <span id="cost-jetpack">200</span> Coins</p>
+                <button onclick="buyUpgrade('jetpack')">Buy Upgrade</button>
+            </div>
+            <div class="card">
+                <h3>Magic Carpet</h3>
+                <p>Continuous flight capability!</p>
+                <p>Cost: <span id="cost-carpet">500</span> Coins</p>
+                <button onclick="buyUpgrade('carpet')">Buy Upgrade</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PET STORE MODAL -->
+    <div id="pet-modal" class="modal hidden">
+        <div class="modal-header">
+            <h2>Pet Store & Egg Hatching</h2>
+            <button class="close-btn" onclick="closeModal('pet-modal')">X</button>
+        </div>
+        <div class="grid-container">
+            <!-- Common Egg -->
+            <div class="card egg-card" style="border-color: #7f8c8d;" onclick="hatchEgg('common')">
+                <h3 style="color: #7f8c8d;">Common Egg</h3>
+                <p>Cost: 50 Coins</p>
+                <div class="tooltip">
+                    <b>Drop Rates:</b><br>
+                    - Dog (80%): +1.25x coins<br>
+                    - Cat (15%): +1.5x coins<br>
+                    - Lion (5%): +1.8x coins
+                </div>
+            </div>
+            <!-- Uncommon Egg -->
+            <div class="card egg-card" style="border-color: #27ae60;" onclick="hatchEgg('uncommon')">
+                <h3 style="color: #27ae60;">Uncommon Egg</h3>
+                <p>Cost: 100 Coins</p>
+                <div class="tooltip">
+                    <b>Drop Rates:</b><br>
+                    - Kitty (80%): 2x coins<br>
+                    - Puppy (19.5%): 2.25x coins<br>
+                    - Hippo (0.5%): 2.9x coins
+                </div>
+            </div>
+            <!-- Rare Egg -->
+            <div class="card egg-card" style="border-color: #2980b9;" onclick="hatchEgg('rare')">
+                <h3 style="color: #2980b9;">Rare Egg</h3>
+                <p>Cost: 250 Coins</p>
+                <div class="tooltip">
+                    <b>Drop Rates:</b><br>
+                    - Giraffe (80%): 3x coins<br>
+                    - Alligator (19.99%): 3.5x coins<br>
+                    - King Cobra (0.01%): 5x coins
+                </div>
+            </div>
+            <!-- Epic Egg -->
+            <div class="card egg-card" style="border-color: #9b59b6;" onclick="hatchEgg('epic')">
+                <h3 style="color: #9b59b6;">Epic Egg</h3>
+                <p>Cost: 500 Coins</p>
+                <div class="tooltip">
+                    <b>Drop Rates:</b><br>
+                    - King Kong (50%): 5x coins<br>
+                    - Godzilla (50%): 5x coins
+                </div>
+            </div>
+            <!-- Legend Egg -->
+            <div class="card egg-card" style="border-color: #f39c12;" onclick="hatchEgg('legend')">
+                <h3 style="color: #f39c12;">Legendary Egg</h3>
+                <p>Cost: 1000 Coins</p>
+                <div class="tooltip">
+                    <b>Drop Rates:</b><br>
+                    - Underworld (80%): 6x coins<br>
+                    - Heaven (19.999999%): 7x coins<br>
+                    - God (0.000001%): 25x coins
+                </div>
+            </div>
+            <!-- Seasonal Spooky Egg -->
+            <div class="card egg-card" style="border-color: #2ecc71; background: #0b2215;" onclick="hatchEgg('spooky')">
+                <h3 style="color: #2ecc71;">🎃 Spooky Egg</h3>
+                <p>Cost: 500 Coins</p>
+                <div class="tooltip">
+                    <b>Drop Rates:</b><br>
+                    - Zombie (70%): 5x coins<br>
+                    - Vampire (15%): 6x coins<br>
+                    - Ghoul (4.9%): 7x coins<br>
+                    - Nightmare (0.1%): 9.99x coins
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 20px; text-align: center;">
+            <h3>Your Pets:</h3>
+            <div id="pet-inventory" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <!-- TRADING PLAZA MODAL -->
+    <div id="trade-modal" class="modal hidden">
+        <div class="modal-header">
+            <h2>Trading Plaza</h2>
+            <button class="close-btn" onclick="closeModal('trade-modal')">X</button>
+        </div>
+        <p>Trade with online players in real-time!</p>
+        <div id="trade-list" style="margin-top: 15px;">
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span>Player: <b>SpeedyGamer99</b> offers [Godzilla] for 400 Coins</span>
+                <button onclick="executeTrade('Godzilla', 400)">Accept Trade</button>
+            </div>
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Player: <b>ObbyKing</b> offers [Heaven] for 800 Coins</span>
+                <button onclick="executeTrade('Heaven', 800)">Accept Trade</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authMode = 'create';
+        let userData = {
+            username: "",
+            password: "",
+            coins: 0.0,
+            upgrades: { speed: 1, jump: 1, jetpack: false, carpet: false },
+            pets: [],
+            equippedPet: null,
+            coinMultiplier: 1.0
+        };
+        let pendingDifficulty = 'easy';
+
+        function showAuthForm(mode) {
+            authMode = mode;
+            document.getElementById('auth-choice').classList.add('hidden');
+            document.getElementById('auth-form').classList.remove('hidden');
+            document.getElementById('auth-title').innerText = (mode === 'create') ? "Create Account" : "Login to Account";
+        }
+
+        function backToAuthChoice() {
+            document.getElementById('auth-form').classList.add('hidden');
+            document.getElementById('auth-choice').classList.remove('hidden');
+        }
+
+        function submitAuth() {
+            const u = document.getElementById('username-input').value.trim();
+            const p = document.getElementById('password-input').value.trim();
+            if(!u || !p) {
+                alert("Please enter both username and password.");
+                return;
+            }
+
+            const saved = localStorage.getItem('obby_user_' + u);
+
+            if(authMode === 'create') {
+                if(saved) {
+                    alert("Account already exists! Please choose a different username or switch to Login.");
+                    return;
+                }
+                userData.username = u;
+                userData.password = p;
+                saveUserData();
+                alert("Account created successfully!");
+            } else {
+                if(!saved) {
+                    alert("Account not found! Please create an account first.");
+                    return;
+                }
+                const parsed = JSON.parse(saved);
+                if(parsed.password === p) {
+                    userData = parsed;
+                } else {
+                    alert("Incorrect password!");
+                    return;
+                }
+            }
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+            updateHUD();
+        }
+
+        function saveUserData() {
+            localStorage.setItem('obby_user_' + userData.username, JSON.stringify(userData));
+        }
+
+        function updateHUD() {
+            document.getElementById('coin-display').innerText = userData.coins.toFixed(2);
+            let petName = userData.equippedPet ? `${userData.equippedPet.name} (${userData.equippedPet.multiplier}x)` : "None";
+            document.getElementById('pet-display').innerText = petName;
+            renderPets();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function returnToMenu() {
+            if(inGame) { cancelAnimationFrame(animationFrameId); document.body.removeChild(renderer.domElement); inGame = false; }
+            document.getElementById('ui-container').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+            saveUserData();
+        }
+
+        function prepObby(difficulty) {
+            pendingDifficulty = difficulty;
+            openModal('instructions-modal');
+        }
+
+        function closeInstructionsAndPlay() {
+            closeModal('instructions-modal');
+            startObby(pendingDifficulty);
+        }
+
+        // Upgrades System
+        function buyUpgrade(type) {
+            let cost = type === 'speed' || type === 'jump' ? 50 * userData.upgrades[type] : (type === 'jetpack' ? 200 : 500);
+            if(type === 'jetpack' && userData.upgrades.jetpack) { alert("Already owned!"); return; }
+            if(type === 'carpet' && userData.upgrades.carpet) { alert("Already owned!"); return; }
+
+            if(userData.coins >= cost) {
+                userData.coins -= cost;
+                if(type === 'speed' || type === 'jump') userData.upgrades[type]++;
+                else userData.upgrades[type] = true;
+                saveUserData();
+                updateHUD();
+                alert("Upgrade purchased successfully!");
+            } else {
+                alert("Not enough coins!");
+            }
+        }
+
+        // Pet Hatching System
+        const eggTables = {
+            common: [
+                { name: "Dog", chance: 80, mult: 1.25 },
+                { name: "Cat", chance: 15, mult: 1.5 },
+                { name: "Lion", chance: 5, mult: 1.8 }
+            ],
+            uncommon: [
+                { name: "Kitty", chance: 80, mult: 2.0 },
+                { name: "Puppy", chance: 19.5, mult: 2.25 },
+                { name: "Hippo", chance: 0.5, mult: 2.9 }
+            ],
+            rare: [
+                { name: "Giraffe", chance: 80, mult: 3.0 },
+                { name: "Alligator", chance: 19.99, mult: 3.5 },
+                { name: "King Cobra", chance: 0.01, mult: 5.0 }
+            ],
+            epic: [
+                { name: "King Kong", chance: 50, mult: 5.0 },
+                { name: "Godzilla", chance: 50, mult: 5.0 }
+            ],
+            legend: [
+                { name: "Underworld", chance: 80, mult: 6.0 },
+                { name: "Heaven", chance: 19.999999, mult: 7.0 },
+                { name: "God", chance: 0.000001, mult: 25.0 }
+            ],
+            spooky: [
+                { name: "Zombie", chance: 70, mult: 5.0 },
+                { name: "Vampire", chance: 15, mult: 6.0 },
+                { name: "Ghoul", chance: 4.9, mult: 7.0 },
+                { name: "Nightmare", chance: 0.1, mult: 9.99 }
+            ]
+        };
+
+        const eggCosts = { common: 50, uncommon: 100, rare: 250, epic: 500, legend: 1000, spooky: 500 };
+
+        function hatchEgg(type) {
+            let cost = eggCosts[type];
+            if(userData.coins < cost) { alert("Not enough coins to buy this egg!"); return; }
+            userData.coins -= cost;
+
+            let roll = Math.random() * 100;
+            let cumulative = 0;
+            let table = eggTables[type];
+            let hatchedPet = table[0];
+
+            for(let pet of table) {
+                cumulative += pet.chance;
+                if(roll <= cumulative) {
+                    hatchedPet = pet;
+                    break;
+                }
+            }
+
+            userData.pets.push({ name: hatchedPet.name, multiplier: hatchedPet.mult });
+            saveUserData();
+            updateHUD();
+            alert(`Congratulations! You hatched a ${hatchedPet.name} (${hatchedPet.mult}x coins)!`);
+        }
+
+        function renderPets() {
+            let inv = document.getElementById('pet-inventory');
+            inv.innerHTML = "";
+            userData.pets.forEach((pet, index) => {
+                let div = document.createElement('div');
+                div.className = "card";
+                div.style.padding = "8px 12px";
+                div.innerHTML = `<b>${pet.name}</b><br>${pet.multiplier}x<br><button onclick="equipPet(${index})">Equip</button>`;
+                inv.appendChild(div);
+            });
+        }
+
+        function equipPet(index) {
+            userData.equippedPet = userData.pets[index];
+            userData.coinMultiplier = userData.equippedPet.multiplier;
+            saveUserData();
+            updateHUD();
+        }
+
+        function executeTrade(petName, cost) {
+            if(userData.coins >= cost) {
+                userData.coins -= cost;
+                userData.pets.push({ name: petName, multiplier: 5.0 });
+                saveUserData();
+                updateHUD();
+                alert(`Successfully traded for ${petName}!`);
+            } else {
+                alert("Not enough coins for this trade!");
+            }
+        }
+
+        // --- 3D OBBY GAME ENGINE (Three.js) ---
+        let scene, camera, renderer, player, obstacles = [], spikes = [], movingObjects = [], finishPlatform;
+        let inGame = false, animationFrameId;
+        let moveState = { forward: false, backward: false, left: false, right: false, jump: false };
+        let playerVelY = 0, isGrounded = false, currentDifficulty = 'easy';
+        let levelLength = 20;
+
+        function startObby(difficulty) {
+            currentDifficulty = difficulty;
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('ui-container').classList.remove('hidden');
+            document.getElementById('difficulty-display').innerText = `Difficulty: ${difficulty.toUpperCase()}`;
+
+            if(difficulty === 'easy') levelLength = 20;
+            if(difficulty === 'intermediate') levelLength = 70;
+            if(difficulty === 'hard') levelLength = 100;
+            if(difficulty === 'impossible') levelLength = 140;
+
+            initThreeJS();
+            inGame = true;
+            animateGame();
+        }
+
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a1a);
+            scene.fog = new THREE.FogExp2(0x0a0a1a, 0.015);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting
+            let ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            let dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(20, 40, 20);
+            scene.add(dirLight);
+
+            obstacles = [];
+            spikes = [];
+            movingObjects = [];
+
+            // Procedural Obby Generation
+            let startPlat = createPlatform(0, 0, 0, 6, 1, 6, 0x00ffcc);
+            scene.add(startPlat);
+            obstacles.push(startPlat);
+
+            let lastZ = -10;
+            for(let i = 0; i < levelLength; i++) {
+                let width = Math.max(2, 6 - (i * 0.02));
+                let height = 1;
+                let depth = Math.max(2, 5 - (i * 0.01));
+                let x = (Math.random() - 0.5) * (currentDifficulty === 'impossible' ? 10 : 6);
+                let color = new THREE.Color().setHSL(Math.random(), 0.8, 0.5);
+
+                let plat = createPlatform(x, 0, lastZ, width, height, depth, color);
+                scene.add(plat);
+                obstacles.push(plat);
+
+                // Add Spikes & Moving obstacles based on difficulty
+                if(i > 2 && i % 2 === 0 && currentDifficulty !== 'easy') {
+                    let spike = createSpike(x, 0.6, lastZ);
+                    scene.add(spike);
+                    spikes.push(spike);
+                }
+                if(i > 4 && (currentDifficulty === 'hard' || currentDifficulty === 'impossible' || (currentDifficulty === 'intermediate' && i % 3 === 0))) {
+                    let mover = createMovingObstacle(x, 1, lastZ);
+                    scene.add(mover);
+                    movingObjects.push({ mesh: mover, range: 3, speed: 0.05 + (i*0.001), dir: 1, startX: x });
+                }
+
+                lastZ -= (4 + Math.random() * 3);
+            }
+
+            // Finish Platform
+            finishPlatform = createPlatform(0, 0, lastZ - 5, 8, 1, 8, 0xff00ff);
+            scene.add(finishPlatform);
+
+            // Player Setup
+            let playerGeo = new THREE.BoxGeometry(1, 1.8, 1);
+            let playerMat = new THREE.MeshStandardMaterial({ color: 0xff007f });
+            player = new THREE.Mesh(playerGeo, playerMat);
+            player.position.set(0, 2, 2);
+            scene.add(player);
+
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+        }
+
+        function createPlatform(x, y, z, w, h, d, color) {
+            let geo = new THREE.BoxGeometry(w, h, d);
+            let mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
+            let mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y - h/2, z);
+            return mesh;
+        }
+
+        function createSpike(x, y, z) {
+            let geo = new THREE.ConeGeometry(0.5, 1, 4);
+            let mat = new THREE.MeshStandardMaterial({ color: 0xff2222, metalness: 0.8 });
+            let mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            return mesh;
+        }
+
+        function createMovingObstacle(x, y, z) {
+            let geo = new THREE.BoxGeometry(1.5, 0.8, 1.5);
+            let mat = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+            let mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            return mesh;
+        }
+
+        function onKeyDown(e) {
+            if(e.code === 'KeyW' || e.code === 'ArrowUp') moveState.forward = true;
+            if(e.code === 'KeyS' || e.code === 'ArrowDown') moveState.backward = true;
+            if(e.code === 'KeyA' || e.code === 'ArrowLeft') moveState.left = true;
+            if(e.code === 'KeyD' || e.code === 'ArrowRight') moveState.right = true;
+            if(e.code === 'Space' && (isGrounded || userData.upgrades.jetpack || userData.upgrades.carpet)) {
+                playerVelY = 0.2 + (userData.upgrades.jump * 0.02);
+                isGrounded = false;
+            }
+        }
+
+        function onKeyUp(e) {
+            if(e.code === 'KeyW' || e.code === 'ArrowUp') moveState.forward = false;
+            if(e.code === 'KeyS' || e.code === 'ArrowDown') moveState.backward = false;
+            if(e.code === 'KeyA' || e.code === 'ArrowLeft') moveState.left = false;
+            if(e.code === 'KeyD' || e.code === 'ArrowRight') moveState.right = false;
+        }
+
+        function animateGame() {
+            if(!inGame) return;
+            animationFrameId = requestAnimationFrame(animateGame);
+
+            let speed = 0.15 + (userData.upgrades.speed * 0.02);
+            if(moveState.forward) player.position.z -= speed;
+            if(moveState.backward) player.position.z += speed;
+            if(moveState.left) player.position.x -= speed;
+            if(moveState.right) player.position.x += speed;
+
+            // Gravity & Flight
+            if(userData.upgrades.carpet) {
+                playerVelY = 0;
+                if(moveState.forward) player.position.y += 0.1;
+            } else {
+                playerVelY -= 0.01;
+                player.position.y += playerVelY;
+            }
+
+            // Platform Collision Check
+            isGrounded = false;
+            let allPlats = [...obstacles, finishPlatform];
+            for(let plat of allPlats) {
+                let box = new THREE.Box3().setFromObject(plat);
+                let pBox = new THREE.Box3().setFromObject(player);
+                if(box.intersectsBox(pBox)) {
+                    if(playerVelY <= 0 && player.position.y > plat.position.y) {
+                        player.position.y = plat.position.y + 1.4;
+                        playerVelY = 0;
+                        isGrounded = true;
+                    }
+                }
+            }
+
+            // Spike Collision (Death & Restart)
+            for(let spike of spikes) {
+                let box = new THREE.Box3().setFromObject(spike);
+                let pBox = new THREE.Box3().setFromObject(player);
+                if(box.intersectsBox(pBox)) {
+                    respawnPlayer();
+                }
+            }
+
+            // Moving Obstacles Update & Collision
+            for(let m of movingObjects) {
+                m.mesh.position.x += m.speed * m.dir;
+                if(Math.abs(m.mesh.position.x - m.startX) > m.range) m.dir *= -1;
+
+                let box = new THREE.Box3().setFromObject(m.mesh);
+                let pBox = new THREE.Box3().setFromObject(player);
+                if(box.intersectsBox(pBox)) {
+                    respawnPlayer();
+                }
+            }
+
+            // Fall Off Map Check
+            if(player.position.y < -10) {
+                respawnPlayer();
+            }
+
+            // Finish Line Check (Fixed to correctly trigger and award coins)
+            let finishBox = new THREE.Box3().setFromObject(finishPlatform);
+            let playerBox = new THREE.Box3().setFromObject(player);
+            if(finishBox.intersectsBox(playerBox)) {
+                let baseReward = 10;
+                if(currentDifficulty === 'intermediate') baseReward = 15;
+                if(currentDifficulty === 'hard') baseReward = 20;
+                if(currentDifficulty === 'impossible') baseReward = 50;
+
+                let finalReward = baseReward * userData.coinMultiplier;
+                userData.coins += finalReward;
+                saveUserData();
+
+                alert(`Victory! You beat ${currentDifficulty.toUpperCase()} and earned ${finalReward.toFixed(2)} coins!`);
+                returnToMenu();
+                return;
+            }
+
+            // Camera follow
+            camera.position.set(player.position.x, player.position.y + 4, player.position.z + 8);
+            camera.lookAt(player.position);
+
+            renderer.render(scene, camera);
+        }
+
+        function respawnPlayer() {
+            player.position.set(0, 3, 2);
+            playerVelY = 0;
+        }
+
+        window.addEventListener('resize', () => {
+            if(!inGame) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
